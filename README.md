@@ -45,7 +45,7 @@ doing this wastes a lot of compute and is very time consuming.
 
    LORA are attached to these target modules(ie the q_proj,k_proj,v_proj,o_proj )
    attaching to o_proj ,v_proj helps to change what information to extract and how it blends the informatin together.
-   attaching to q_proj and the k_proj changes where the model looks and what information it extracts.
+   attaching to q_proj and the k_proj changes where the model looks and what connection it draws.
 
    MLP PART:
      the output of the  o_proj is passed  to the multi layer perceptron part of the respective nueral layer.
