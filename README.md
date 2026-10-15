@@ -17,6 +17,8 @@ doing this wastes a lot of compute and is very time consuming.
  The new weights are given as:
  h=W+(alpha/r)*delta(W)
 
+ alpha/r done for scalability purpose.
+
  The delta(W) is the change in the weights of the parameters. 
  delta(w) is where we divide the entire weight into 2 relatively smaller matrices, instead of one whole big d*k matrix
  delta(W) is =B@A where the B represents the d*r matrix and the the A matrix represent the r*k matrix
@@ -27,7 +29,7 @@ doing this wastes a lot of compute and is very time consuming.
  
 2) ATTENTION AND THE MLP(mutli layer perceptron):
    - - - - - - - - - - - - - - - - - - - - - - -
-   
+  ATTENTION PART:
    For the current model used that is mistral 7B (7 Billion parameters) .
    AI Nueral Network is divided into multiple layers (here 32 layers from 0-31)
    Each layer has its own ATTENTION and the MLP.
@@ -37,5 +39,19 @@ doing this wastes a lot of compute and is very time consuming.
    value_proj is used to hold the retrieved data.
    
    the output_proj(o_proj)  processes the values which are  obtained from different value_proj.
+
+
+   LORA are attached to these target modules(ie the q_proj,k_proj,v_proj,o_proj )
+   attaching to o_proj ,v_proj helps to blend in new information along with the existing pre trained model's information
+   attaching to q_proj and the k_proj helps to insert new information in the existing pre trained model.
+
+   MLP PART:
+     the output of the  o_proj is passed  to the multi layer perceptron part of the respective nueral layer.
+     the mlp consists of three matrices the up_proj,gate_proj,down_proj.
+    up_proj:
+    
+   
+     
+
    
 
