@@ -15,7 +15,7 @@ never change. Instead, LoRA injects tiny, highly efficient adapter paths paralle
 existing weights. Only these new adapter parameters are trainable.
 
 The mathematical adaptation is calculated as:
-h = Wx + (alpha / r) * (ΔW)x
+W new = Wx + (alpha / r) * (ΔW)x
 
 - (alpha / r) is a constant scaling factor used for mathematical stability. If you change 
   the rank 'r' later to learn more complex patterns, maintaining this ratio ensures you 
