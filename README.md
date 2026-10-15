@@ -29,9 +29,13 @@ doing this wastes a lot of compute and is very time consuming.
    - - - - - - - - - - - - - - - - - - - - - - -
    
    For the current model used that is mistral 7B (7 Billion parameters) .
-   A Nueral Network is divided into multiple layers (here 32 layers from 0-31)
+   AI Nueral Network is divided into multiple layers (here 32 layers from 0-31)
    Each layer has its own ATTENTION and the MLP.
+   Every layer contains multiple(32 in this case) Attention heads.
+   Every Attention head contains thier own multiple  k,q,v (key_proj,query_proj,value_proj)
+   key_proj and the query_proj are used to retrieve the data.
+   value_proj is used to hold the retrieved data.
    
-   ATTENTION contains 4 parts k,q,v,o (key_proj,query_proj,value_proj,output_proj)
-   key_proj and the value_proj are used to retrieve the data from the 
+   the output_proj(o_proj)  processes the values which are  obtained from different value_proj.
+   
 
