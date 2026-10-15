@@ -1,63 +1,63 @@
 # Fine-Tuning-LLM
-This is to fine tune the LLM  specifically for Data Structure and Algorithms .
+This repository contains scripts to fine-tune an LLM specifically for Data Structures and Algorithms (DSA).
 
-
-NOTES FOR MYSLELF ABOUT THE CONCEPTS UTILISED.
+NOTES FOR MYSELF ABOUT THE CONCEPTS UTILISED
 ----------------------------------------------
-1 ) LORA MODULES AND HOW THEY ARE ATTACHED.
+1) LoRA MODULES AND HOW THEY ARE ATTACHED
 - - - - - - - - - - - - - - - - - - - - - - - 
-LOW RANKING ADAPTIVE MODULES.
-basically the problem we face right now  without lora is that ,if we want to change the weights of the parameters then we have to 
-do it on a large scale which involves a lot of matrix multiplication of millions of rows of weights.
-doing this wastes a lot of compute and is very time consuming.
- How LORA resolves this issue is by freezing the entire weight matrix. Only few paramters are unfrozen and are changed
+LOW-RANK ADAPTATION (LoRA)
+Without LoRA, performing a full fine-tune requires updating all parameters in the network. 
+This involves massive matrix multiplication across billions of parameters, which is 
+highly compute-intensive, slow, and expensive.
 
- LORA adapters are attached parallelly existing weights of the parameters.
- 
- The new weights are given as:
- h=W+(alpha/r)*delta(W)
+LoRA resolves this by keeping the entire base weight matrix 100% FROZEN. The base parameters 
+never change. Instead, LoRA injects tiny, highly efficient adapter paths parallel to the 
+existing weights. Only these new adapter parameters are trainable.
 
- alpha/r done for scalability purpose.
+The mathematical adaptation is calculated as:
+h = Wx + (alpha / r) * (ΔW)x
 
- The delta(W) is the change in the weights of the parameters. 
- delta(w) is where we divide the entire weight into 2 relatively smaller matrices, instead of one whole big d*k matrix
- delta(W) is =B@A where the B represents the d*r matrix and the the A matrix represent the r*k matrix
- (r->rank of the weight matrix and the d,k are the rows and columns of the original matrix)
- 
- alpha represent how strongly are we changing the weights of the parameters , and the r is representing the rank of the weight matrix
+- (alpha / r) is a constant scaling factor used for mathematical stability. If you change 
+  the rank 'r' later to learn more complex patterns, maintaining this ratio ensures you 
+  don't have to completely re-tune your global learning rate.
+- alpha represents the "volume" or strength of the adapter's influence over the base model.
+- r represents the 'Rank' (bottleneck dimension) of the adapter matrices.
+- ΔW represents the learned weight update. To save memory, a giant d x k matrix update 
+  is split into two low-rank matrices: B (size d x r) and A (size r x k). 
+  Therefore, ΔW = B @ A. Because the inner dimension 'r' is very small (e.g., 16), it drastically 
+  reduces VRAM usage.
 
- 
-2) ATTENTION AND THE MLP(mutli layer perceptron):
-   - - - - - - - - - - - - - - - - - - - - - - -
-  ATTENTION PART:
-   For the current model used that is mistral 7B (7 Billion parameters) .
-   AI Nueral Network is divided into multiple layers (here 32 layers from 0-31)
-   Each layer has its own ATTENTION and the MLP.
-   Every layer contains multiple(32 in this case) Attention heads.
-   Every Attention head contains thier own multiple  k,q,v (key_proj,query_proj,value_proj)
-   key_proj and the query_proj are used to retrieve the data.
-   value_proj is used to hold the retrieved data.
-   
-   the output_proj(o_proj)  processes the values which are  obtained from different value_proj.
+2) ATTENTION AND THE MLP (MULTI-LAYER PERCEPTRON)
+- - - - - - - - - - - - - - - - - - - - - - -
+ATTENTION PART:
+- The base model used here (Mistral 7B) features a neural network split into 32 sequential 
+  layers (numbered 0 to 31). Each layer contains its own Attention Block and MLP Block.
+- Within each layer's Attention Block, the workload is distributed across 32 parallel 
+  Attention Heads.
+- Each Attention Head operates on its own dedicated slice of the layer's overall q_proj (Query), 
+  k_proj (Key), and v_proj (Value) matrices.
+  * q_proj & k_proj: Act as index matchers. They figure out relationships between tokens 
+    (e.g., matching an open bracket to a closed bracket, or a variable name to its function).
+  * v_proj: Acts as the content gatherer, extracting the raw semantic meaning of the tokens.
+  * o_proj (Output Projection): The final mixer. It takes the fragmented outputs from all 
+    32 attention heads, glues them back together, and blends them into a unified context summary.
 
+LoRA Attachment Context:
+- Attaching LoRA to q_proj and k_proj adjusts HOW the model focuses and links code structures.
+- Attaching LoRA to v_proj and o_proj adjusts WHAT factual code information is retrieved and 
+  how it is blended down the line.
 
-   LORA are attached to these target modules(ie the q_proj,k_proj,v_proj,o_proj )
-   attaching to o_proj ,v_proj helps to blend in new information along with the existing pre trained model's information
-   attaching to q_proj and the k_proj helps to insert new information in the existing pre trained model.
+MLP PART:
+The unified summary from o_proj is handed directly to the MLP (Thinking) department of the layer. 
+The MLP acts as the reasoning engine and uses a 3-matrix layout (SwiGLU):
+- up_proj: Takes the 4,096-dimensional input and explodes it into a massive 14,336-dimensional 
+  vector space. This acts like a giant whiteboard, giving the model massive mathematical room 
+  to cross-reference multiple DSA logic rules simultaneously without clashing.
+- gate_proj: Operates in parallel with up_proj. It acts as a router/filter, applying a SiLU 
+  activation function to turn ON relevant slots (like syntax/algorithms) and turn OFF 
+  irrelevant slots (like conversational filler).
+- down_proj: Takes the massive, filtered 14,336-dimensional whiteboard results and compresses 
+  them back down into a dense 4,096-dimensional summary package so it can fit into the next layer.
 
-   MLP PART:
-     the output of the  o_proj is passed  to the multi layer perceptron part of the respective nueral layer.
-     the mlp consists of three matrices the up_proj,gate_proj,down_proj.
-    up_proj : expands the given data into a large space 
-    gate_proj: in the expanded space only turns on the information (data) which are relavent to the given context
-    down_proj: decompresses it and sends to the next layer of nueral network.
-
-    every nueral layer:
-    attention(k,q,v,o)---->mlp(up_proj,gate_proj,down_proj)------->passed to next layer
-    
-   
-     
-
-   
-
-check its right or not if not tell what to change
+Data Flow Pipeline Per Layer:
+Input -> Attention (q, k, v -> o) -> MLP (up & gate -> down) -> Sent to Next Layer
