@@ -179,6 +179,7 @@ Mistral-7B has 32 sequential layers (0 to 31). Each layer has an attention block
 ## Author
 
 **G Anirudh**, B.Tech CSE (Data Science), VIT Vellore · [GitHub](https://github.com/GAnirudh2006)
+
 NOTES FOR MYSELF ABOUT THE CONCEPTS UTILISED
 ----------------------------------------------
 1) LoRA MODULES AND HOW THEY ARE ATTACHED
